@@ -1,16 +1,15 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import yaml
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def load_goals():
+    with open('goals.yaml', 'r', encoding='utf-8') as f:
+        return yaml.safe_load(f)
 
 
-# Press the green button in the gutter to run the script.
+def select_random_goal():
+    goals = load_goals()
+    print(goals)
+
+
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    select_random_goal()
