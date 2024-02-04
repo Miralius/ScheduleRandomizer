@@ -1,7 +1,6 @@
 from enum import Enum
 
 import yaml
-import copy
 import sys
 
 priority_field = 'Priority'
@@ -78,8 +77,7 @@ def put_weighted_goals(weighted_goals: dict, goals: list, weight: float) -> None
 
 def check_sum_of_goal_weights(weighted_goals: dict[str: dict[str: float]]) -> None:
     sum_of_goal_weights = sum(map(lambda weight_dict: weight_dict[weight_field], weighted_goals.values()))
-    assert abs(1 - sum_of_goal_weights) < sys.float_info.epsilon, \
-        f"Wrong sum of goal weights: {sum_of_goal_weights}"
+    assert abs(1 - sum_of_goal_weights) < sys.float_info.epsilon, f"Wrong sum of goal weights: {sum_of_goal_weights}"
 
 
 def get_weighted_goals_by_marks(goals: dict) -> dict[str: dict[str: float]]:
@@ -121,11 +119,10 @@ def is_it_root_node(node: dict) -> bool:
 def create_processed_goal_node(goals: dict, processed_goals: dict) -> dict[str: any]:
     if is_it_root_node(goals):
         return processed_goals
-    in_between_goals = copy.copy(processed_goals)
     for name, value in goals.items():
         if type(value) is int:
-            in_between_goals[name] = value
-            return in_between_goals
+            processed_goals[name] = value
+            return processed_goals
     raise ValueError("Wrong sum of goal weights")
 
 
@@ -133,9 +130,8 @@ def process_goals(goals: dict) -> dict:
     weights_were_calculated = False
     for name, child_goals in goals.items():
         if type(child_goals) is dict and len(child_goals) > 1:
-            processed_goals = process_goals(child_goals)
+            goals[name] = create_processed_goal_node(child_goals, process_goals(child_goals))
             weights_were_calculated = True
-            goals[name] = create_processed_goal_node(child_goals, processed_goals)
 
     if weights_were_calculated:
         return create_processed_goal_node(goals, get_weighted_goals(goals))
