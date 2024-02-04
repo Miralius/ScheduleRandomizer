@@ -76,8 +76,10 @@ def put_weighted_goals(weighted_goals: dict, goals: list, weight: float) -> None
             weighted_goals[goal] = {weight_field: weight}
 
 
-def get_sum_of_goal_weights(weighted_goals: dict[str: dict[str: float]]) -> float:
-    return sum(map(lambda weight_dict: weight_dict[weight_field], weighted_goals.values()))
+def check_sum_of_goal_weights(weighted_goals: dict[str: dict[str: float]]) -> None:
+    sum_of_goal_weights = sum(map(lambda weight_dict: weight_dict[weight_field], weighted_goals.values()))
+    assert abs(1 - sum_of_goal_weights) < sys.float_info.epsilon, \
+        f"Wrong sum of goal weights: {sum_of_goal_weights}"
 
 
 def get_weighted_goals_by_marks(goals: dict) -> dict[str: dict[str: float]]:
@@ -87,9 +89,7 @@ def get_weighted_goals_by_marks(goals: dict) -> dict[str: dict[str: float]]:
     for mark, goal_list in marks_with_goals.items():
         weight = (11 - mark) / sum_priority_marks
         put_weighted_goals(weighted_goals, goal_list, weight)
-    sum_of_goal_weights = get_sum_of_goal_weights(weighted_goals)
-    assert abs(1 - sum_of_goal_weights) < sys.float_info.epsilon, \
-        f"Wrong sum of goal weights: {sum_of_goal_weights}"
+    check_sum_of_goal_weights(weighted_goals)
     return weighted_goals
 
 
@@ -101,9 +101,7 @@ def get_weighted_goals_by_priorities(goals: dict) -> dict[str: dict[str: float]]
         the_same_priority_goal_count = count_goals_with_the_same_priority(goal_list)
         weight = (float(2 ** (min_priority - priority)) / the_same_priority_goal_count) / (2 ** min_priority - 1)
         put_weighted_goals(weighted_goals, goal_list, weight)
-    sum_of_goal_weights = get_sum_of_goal_weights(weighted_goals)
-    assert abs(1 - sum_of_goal_weights) < sys.float_info.epsilon, \
-        f"Wrong sum of goal weights: {sum_of_goal_weights}"
+    check_sum_of_goal_weights(weighted_goals)
     return weighted_goals
 
 
