@@ -2,6 +2,7 @@ from enum import Enum
 
 import yaml
 import sys
+import random
 
 priority_field = 'Priority'
 mark_field = 'Mark'
@@ -139,11 +140,21 @@ def process_goals(goals: dict) -> dict:
     return get_weighted_goals(goals)
 
 
-def select_random_goal() -> None:
+def get_lower_goal(goals: dict[str: dict[str: float]], random_point: float) -> str:
+    integral_probability = float()
+    for name, weight_dict in goals.items():
+        integral_probability += get_value_from_dict(weight_dict)
+        if integral_probability > random_point:
+            return name
+    raise ValueError("Wrong sum of goal weights or wrong random point (must be <=1)")
+
+
+def select_random_goal() -> str:
     goals = load_goals()
     goals_dict = process_goals(goals)
-    print(goals_dict)
+    random_point = random.random()
+    return get_lower_goal(goals_dict, random_point)
 
 
 if __name__ == '__main__':
-    select_random_goal()
+    print(select_random_goal())
