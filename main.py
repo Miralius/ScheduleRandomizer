@@ -7,6 +7,13 @@ import random
 priority_field = 'Priority'
 mark_field = 'Mark'
 weight_field = 'Weight'
+start_time_field = 'Start time'
+deadline_field = 'Deadline'
+last_execution_field = 'Last execution'
+start_duration_field = 'Start duration'
+escalation_duration_field = 'Escalation duration'
+special_fields = [priority_field, last_execution_field, mark_field, weight_field, start_time_field,
+                  deadline_field, start_duration_field, escalation_duration_field]
 
 
 class WeightType(Enum):
@@ -35,27 +42,32 @@ def are_child_goals_have_marks(child_goals: dict) -> bool:
     return mark_field in child_goals
 
 
+def are_fields_special(child_goals: dict) -> bool:
+    return all(field in special_fields for field in child_goals)
+
+
 def get_priorities_or_marks_with_goals(goals: dict, weightType: WeightType) -> dict[int: any]:
     priorities_with_goals = {}
     weight_type_field = priority_field if weightType == WeightType.PRIORITY else mark_field
     for name, goal in goals.items():
-        if name not in [priority_field, mark_field]:
+        if name not in special_fields:
             if weight_type_field == priority_field and goal[priority_field] == 0:
                 return {1: [name]}
             if goal[weight_type_field] not in priorities_with_goals:
                 priorities_with_goals[goal[weight_type_field]] = []
-            if len(goal) == 1 and weight_type_field in goal:
-                priorities_with_goals[goal[weight_type_field]].append(name)
+            if are_fields_special(goal):
+                if len(goal) == 1:
+                    priorities_with_goals[goal[weight_type_field]].append(name)
+                else:
+                    priorities_with_goals[goal[weight_type_field]].append({name: {special_field: special_value for
+                                                                                  special_field, special_value in
+                                                                                  goal.items() if
+                                                                                  special_field != weight_type_field}})
             else:
-                priorities_with_goals[goal[weight_type_field]] = [{name + ' — ' + weighted_goal: weight} for
-                                                                  weighted_goal, weight in goal.items() if
-                                                                  weighted_goal != weight_type_field]
+                for weighted_goal, weight in goal.items():
+                    if weighted_goal != weight_type_field:
+                        priorities_with_goals[goal[weight_type_field]].append({name + ' — ' + weighted_goal: weight})
     return priorities_with_goals
-
-
-def count_goals_with_the_same_priority(goals: list) -> int:
-    goal_dict_count = sum(map(lambda goal: type(goal) is dict, goals))
-    return len(goals) - (goal_dict_count - 1) if goal_dict_count > 0 else 1
 
 
 def get_key_from_dict(dictionary: dict, index=0) -> any:
@@ -66,14 +78,33 @@ def get_value_from_dict(dictionary: dict, index=0) -> any:
     return list(dictionary.values())[index]
 
 
-def put_weighted_goals(weighted_goals: dict, goals: list, weight: float) -> None:
+def normalize(goals: list[dict[str: dict[str: float]]], priority_weight: float) -> None:
+    total_weight = sum(get_value_from_dict(goal)[weight_field] for goal in goals)
+    factor = total_weight / priority_weight
     for goal in goals:
-        if type(goal) is dict:
-            goal_name = get_key_from_dict(goal)
-            goal_weight = weight * get_value_from_dict(get_value_from_dict(goal))
-            weighted_goals[goal_name] = {weight_field: goal_weight}
+        get_value_from_dict(goal)[weight_field] /= factor
+    pass
+
+
+def put_special_fields_into_goal_list(priorities_with_goals: list, priority_weight: float) \
+        -> list[dict[str: dict[str: float]]]:
+    weighted_goal_list = list()
+    for goal in priorities_with_goals:
+        goal_fields = get_value_from_dict(goal) if type(goal) is dict else None
+        if goal_fields is None:
+            weighted_goal_list.append({goal: {weight_field: 1.0}})
         else:
-            weighted_goals[goal] = {weight_field: weight}
+            goal_name = get_key_from_dict(goal)
+            if weight_field not in goal_fields:
+                goal_fields[weight_field] = 1.0
+            weighted_goal_list.append({goal_name: goal_fields})
+    normalize(weighted_goal_list, priority_weight)
+    return weighted_goal_list
+
+
+def put_goal_list_into_dict(goals_dict: dict[str: dict[str: float]], goals_list: list[dict[str: dict[str: float]]]):
+    for goal in goals_list:
+        goals_dict[get_key_from_dict(goal)] = get_value_from_dict(goal)
 
 
 def check_sum_of_goal_weights(weighted_goals: dict[str: dict[str: float]]) -> None:
@@ -86,8 +117,8 @@ def get_weighted_goals_by_marks(goals: dict) -> dict[str: dict[str: float]]:
     marks_with_goals = get_priorities_or_marks_with_goals(goals, WeightType.MARK)
     sum_priority_marks = sum(map(lambda mark_goal: 11 - mark_goal, marks_with_goals))
     for mark, goal_list in marks_with_goals.items():
-        weight = (11 - mark) / sum_priority_marks
-        put_weighted_goals(weighted_goals, goal_list, weight)
+        priority_weight = (11 - mark) / sum_priority_marks
+        put_goal_list_into_dict(weighted_goals, put_special_fields_into_goal_list(goal_list, priority_weight))
     check_sum_of_goal_weights(weighted_goals)
     return weighted_goals
 
@@ -97,9 +128,8 @@ def get_weighted_goals_by_priorities(goals: dict) -> dict[str: dict[str: float]]
     priorities_with_goals = get_priorities_or_marks_with_goals(goals, WeightType.PRIORITY)
     min_priority = max(priorities_with_goals)
     for priority, goal_list in priorities_with_goals.items():
-        the_same_priority_goal_count = count_goals_with_the_same_priority(goal_list)
-        weight = (float(2 ** (min_priority - priority)) / the_same_priority_goal_count) / (2 ** min_priority - 1)
-        put_weighted_goals(weighted_goals, goal_list, weight)
+        priority_weight = float(2 ** (min_priority - priority)) / (2 ** min_priority - 1)
+        put_goal_list_into_dict(weighted_goals, put_special_fields_into_goal_list(goal_list, priority_weight))
     check_sum_of_goal_weights(weighted_goals)
     return weighted_goals
 
@@ -130,7 +160,7 @@ def create_processed_goal_node(goals: dict, processed_goals: dict) -> dict[str: 
 def process_goals(goals: dict) -> dict:
     weights_were_calculated = False
     for name, child_goals in goals.items():
-        if type(child_goals) is dict and len(child_goals) > 1:
+        if type(child_goals) is dict and not are_fields_special(child_goals):
             goals[name] = create_processed_goal_node(child_goals, process_goals(child_goals))
             weights_were_calculated = True
 
@@ -143,7 +173,7 @@ def process_goals(goals: dict) -> dict:
 def get_lower_goal(goals: dict[str: dict[str: float]], random_point: float) -> str:
     integral_probability = float()
     for name, weight_dict in goals.items():
-        integral_probability += get_value_from_dict(weight_dict)
+        integral_probability += weight_dict[weight_field]
         if integral_probability > random_point:
             return name
     raise ValueError("Wrong sum of goal weights or wrong random point (must be <=1)")
