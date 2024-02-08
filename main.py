@@ -134,7 +134,26 @@ def get_weighted_goals_by_priorities(goals: dict) -> dict[str: dict[str: float]]
     return weighted_goals
 
 
-def get_weighted_goals(goals: dict) -> dict[str: dict[str, float]]:
+def calculate_goal_times_with_color(node: dict[str: dict[str: any]], color: str) -> None:
+    pass
+
+
+def calculate_goal_times(node: dict[str: dict[str: any]], colors: list[str]) -> None:
+    pass
+
+
+def set_and_get_goal_colors(node: dict[str: dict[str: any]]) -> list[str]:
+    return list[str]()
+
+
+def get_weighted_goals_by_times(goals: dict[str: dict[str: dict[str: any]]]) -> None:
+    for node in goals.values():
+        calculate_goal_times(node, set_and_get_goal_colors(node))
+
+
+def get_weighted_goals(goals: dict) -> dict[str: dict[str, any]]:
+    if is_it_root_node(goals):
+        get_weighted_goals_by_times(goals)
     if any(are_child_goals_have_priorities(child_goals) for child_goals in goals.values()):
         return get_weighted_goals_by_priorities(goals)
     elif any(are_child_goals_have_marks(child_goals) for child_goals in goals.values()):
