@@ -3,6 +3,7 @@ from enum import Enum
 import yaml
 import sys
 import random
+import datetime
 
 priority_field = 'Priority'
 mark_field = 'Mark'
@@ -12,13 +13,24 @@ deadline_field = 'Deadline'
 last_execution_field = 'Last execution'
 start_duration_field = 'Start duration'
 escalation_duration_field = 'Escalation duration'
+color_field = 'Color'
+yellow_field = 'Yellow time'
+red_field = 'Red time'
 special_fields = [priority_field, last_execution_field, mark_field, weight_field, start_time_field,
-                  deadline_field, start_duration_field, escalation_duration_field]
+                  deadline_field, start_duration_field, escalation_duration_field, color_field]
 
 
 class WeightType(Enum):
     PRIORITY = 1
     MARK = 2
+
+
+class Color(Enum):
+    NOT_STARTED = 0
+    WHITE = 1
+    YELLOW = 2
+    RED = 3
+    BLACK = 4
 
 
 def load_goals() -> dict:
@@ -134,26 +146,95 @@ def get_weighted_goals_by_priorities(goals: dict) -> dict[str: dict[str: float]]
     return weighted_goals
 
 
-def calculate_goal_times_with_color(node: dict[str: dict[str: any]], color: str) -> None:
-    pass
+def calculate_goal_times_with_color(node: dict[str: dict[str: any]], previous_color: Color, current_color: Color):
+    previous_color_numerator = 2 ** (-(current_color.value - previous_color.value))
+    previous_color_factor = previous_color_numerator / sum(goal_fields[weight_field] for goal_fields in node.values()
+                                                           if type(goal_fields) is dict
+                                                           and goal_fields[color_field].value <= previous_color.value)
+    current_color_factor = (1 - previous_color_numerator) / sum(
+        goal_fields[weight_field] for goal_fields in node.values() if type(goal_fields) is dict and
+        goal_fields[color_field] == current_color)
+    for goal_name, goal_field in node.items():
+        if type(goal_field) is not dict:
+            continue
+        if goal_field[color_field].value <= previous_color.value:
+            node[goal_name][weight_field] *= previous_color_factor
+        elif goal_field[color_field] == current_color:
+            node[goal_name][weight_field] *= current_color_factor
 
 
-def calculate_goal_times(node: dict[str: dict[str: any]], colors: list[str]) -> None:
-    pass
+def calculate_goal_times(node: dict[str: dict[str: any]], colors: list[Color]) -> None:
+    assert len(colors), "Empty color list"
+    assert Color.NOT_STARTED not in colors, "Node shouldn't include not started goals."
+    previous_color = None
+    for current_color in [Color.WHITE, Color.YELLOW, Color.RED, Color.BLACK]:
+        if current_color in colors:
+            if not previous_color:
+                previous_color = current_color
+                continue
+            calculate_goal_times_with_color(node, previous_color, current_color)
+            previous_color = current_color
 
 
-def set_and_get_goal_colors(node: dict[str: dict[str: any]]) -> list[str]:
-    return list[str]()
+def get_color_by_time(begin_time: datetime, yellow_time: datetime, red_time: datetime, end_time: datetime) -> Color:
+    if end_time <= datetime.datetime.now():
+        return Color.BLACK
+    elif red_time <= datetime.datetime.now() < end_time:
+        return Color.RED
+    elif yellow_time <= datetime.datetime.now() < red_time:
+        return Color.YELLOW
+    elif begin_time <= datetime.datetime.now() < yellow_time:
+        return Color.WHITE
+    else:
+        return Color.NOT_STARTED
 
 
-def get_weighted_goals_by_times(goals: dict[str: dict[str: dict[str: any]]]) -> None:
+def calculate_escalation_duration_goals(special_goal_fields: dict[str: any]) -> Color:
+    begin_time = (special_goal_fields[last_execution_field] +
+                  datetime.timedelta(days=special_goal_fields[start_duration_field]))
+    next_color_duration = datetime.timedelta(days=special_goal_fields[escalation_duration_field])
+    end_time = begin_time + 3 * next_color_duration
+    red_time = begin_time + 2 * next_color_duration
+    yellow_time = begin_time + next_color_duration
+    return get_color_by_time(begin_time, yellow_time, red_time, end_time)
+
+
+def calculate_deadlined_goals(special_goal_fields: dict[str: any]) -> Color:
+    begin_time = special_goal_fields[start_time_field]
+    end_time = special_goal_fields[deadline_field]
+    yellow_time = special_goal_fields[yellow_field] if yellow_field in special_goal_fields \
+        else begin_time + (end_time - begin_time) / 2
+    red_time = special_goal_fields[red_field] if red_field in special_goal_fields \
+        else begin_time + (end_time - begin_time) * 3 / 4
+    return get_color_by_time(begin_time, yellow_time, red_time, end_time)
+
+
+def set_and_get_goal_colors(node: dict[str: dict[str: any]]) -> list[Color]:
+    colors = []
+    for goal_name, special_goal_fields in node.items():
+        if type(special_goal_fields) is not dict:
+            continue
+        color = Color.WHITE
+        if deadline_field in special_goal_fields:
+            color = calculate_deadlined_goals(special_goal_fields)
+        elif escalation_duration_field in special_goal_fields:
+            color = calculate_escalation_duration_goals(special_goal_fields)
+        if color != Color.NOT_STARTED:
+            node[goal_name] = {weight_field: special_goal_fields[weight_field], color_field: color}
+        else:
+            del node[goal_name]
+        colors.append(color)
+    return colors
+
+
+def calculate_weighted_goals_by_times(goals: dict[str: dict[str: dict[str: any]]]) -> None:
     for node in goals.values():
         calculate_goal_times(node, set_and_get_goal_colors(node))
 
 
 def get_weighted_goals(goals: dict) -> dict[str: dict[str, any]]:
     if is_it_root_node(goals):
-        get_weighted_goals_by_times(goals)
+        calculate_weighted_goals_by_times(goals)
     if any(are_child_goals_have_priorities(child_goals) for child_goals in goals.values()):
         return get_weighted_goals_by_priorities(goals)
     elif any(are_child_goals_have_marks(child_goals) for child_goals in goals.values()):
