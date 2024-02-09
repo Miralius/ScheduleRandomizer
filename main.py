@@ -120,7 +120,8 @@ def put_goal_list_into_dict(goals_dict: dict[str: dict[str: float]], goals_list:
 
 
 def check_sum_of_goal_weights(weighted_goals: dict[str: dict[str: float]]) -> None:
-    sum_of_goal_weights = sum(map(lambda weight_dict: weight_dict[weight_field], weighted_goals.values()))
+    sum_of_goal_weights = sum(map(lambda weight_dict: weight_dict[weight_field] if type(weight_dict) is dict else 0,
+                                  weighted_goals.values()))
     assert abs(1 - sum_of_goal_weights) < sys.float_info.epsilon, f"Wrong sum of goal weights: {sum_of_goal_weights}"
 
 
@@ -174,6 +175,7 @@ def calculate_goal_times(node: dict[str: dict[str: any]], colors: list[Color]) -
                 continue
             calculate_goal_times_with_color(node, previous_color, current_color)
             previous_color = current_color
+    check_sum_of_goal_weights(node)
 
 
 def get_color_by_time(begin_time: datetime, yellow_time: datetime, red_time: datetime, end_time: datetime) -> Color:
