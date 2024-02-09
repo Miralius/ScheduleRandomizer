@@ -1,0 +1,82 @@
+---
+Development:
+  Priority: 1
+  First sphere:
+    Mark: 3
+    First goal:
+      Priority: 2
+      First sub-goal:
+        Priority: 3
+      Second sub-goal:
+        Priority: 2
+      Third sub-goal:
+        Priority: 1
+      Fourth sub-goal:
+        Priority: 1
+        High important sub-sub-goal:
+          Priority: 0
+        The second sub-sub-goal:
+          Priority: 1
+      Fifth sub-goal:
+        Priority: 4
+    Second goal:
+      Priority: 1
+      First highly important goal:
+        Priority: 0
+      Second goal:
+        Priority: 1
+        First sub-goal:
+          Priority: 1
+        Second sub-goal:
+          Priority: 2
+        Third sub-goal:
+          Priority: 3
+          First sub-sub-goal:
+            Priority: 1
+          Second sub-sub-goal:
+            Priority: 2
+          Third sub-sub-goal:
+            Priority: 3
+          Fourth sub-sub-goal:
+            Priority: 4
+      Third goal:
+        Priority: 2
+        First sub-goal:
+          Priority: 1
+        Second sub-goal:
+          Priority: 2
+        Third sub-goal:
+          Priority: 3
+          First sub-sub-goal:
+            Priority: 1
+          Second sub-sub-goal:
+            Priority: 2
+          Third sub-sub-goal:
+            Priority: 3
+          Fourth sub-sub-goal:
+            Priority: 4
+  Second sphere:
+    Mark: 0
+    First goal:
+      Priority: 1
+      First sub-goal:
+        Priority: 1
+        First sub-sub-goal:
+          Priority: 1
+          First sub-sub-goal:
+            Priority: 1
+            Start time: 2023-11-08T13:00:00
+            Yellow time: 2023-11-30T00:00:00
+            Red time: 2023-12-01T23:59:59
+            Deadline: 2023-12-08T23:59:59
+Routine:
+  Priority: 1
+  First sphere:
+    Mark: 0
+    First goal:
+      Priority: 1
+      First sub-goal:
+        Priority: 1
+        Last execution: 2023-11-08T13:00:00
+        Start duration: 30
+        Escalation duration: 1
