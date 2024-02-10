@@ -148,7 +148,7 @@ def get_weighted_goals_by_priorities(goals: dict) -> dict[str: dict[str: float]]
 
 
 def calculate_goal_times_with_color(node: dict[str: dict[str: any]], previous_color: Color, current_color: Color):
-    previous_color_numerator = 2 ** (-(current_color.value - previous_color.value))
+    previous_color_numerator = 2 ** (-(current_color.value - previous_color.value + 1))
     previous_color_factor = previous_color_numerator / sum(goal_fields[weight_field] for goal_fields in node.values()
                                                            if type(goal_fields) is dict
                                                            and goal_fields[color_field].value <= previous_color.value)
