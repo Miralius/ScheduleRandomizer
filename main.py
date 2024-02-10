@@ -89,7 +89,16 @@ def get_value_from_dict(dictionary: dict, index=0) -> any:
     return list(dictionary.values())[index]
 
 
-def normalize(goals: list[dict[str: dict[str: float]]], priority_weight: float) -> None:
+def normalize_dictionary(goals: dict[str: dict[str: float]], weight: float) -> None:
+    total_weight = sum(goal[weight_field] for goal in goals.values() if type(goal) is dict)
+    factor = total_weight / weight
+    for goal in goals.values():
+        if type(goal) is dict:
+            goal[weight_field] /= factor
+    pass
+
+
+def normalize_list(goals: list[dict[str: dict[str: float]]], priority_weight: float) -> None:
     total_weight = sum(get_value_from_dict(goal)[weight_field] for goal in goals)
     factor = total_weight / priority_weight
     for goal in goals:
@@ -109,7 +118,7 @@ def put_special_fields_into_goal_list(priorities_with_goals: list, priority_weig
             if weight_field not in goal_fields:
                 goal_fields[weight_field] = 1.0
             weighted_goal_list.append({goal_name: goal_fields})
-    normalize(weighted_goal_list, priority_weight)
+    normalize_list(weighted_goal_list, priority_weight)
     return weighted_goal_list
 
 
@@ -224,6 +233,7 @@ def calculate_deadlined_goals(special_goal_fields: dict[str: any]) -> Color:
 
 def set_and_get_goal_colors(node: dict[str: dict[str: any]]) -> list[Color]:
     colors = []
+    goals_to_drop = set()
     for goal_name, special_goal_fields in node.items():
         if type(special_goal_fields) is not dict:
             continue
@@ -235,8 +245,13 @@ def set_and_get_goal_colors(node: dict[str: dict[str: any]]) -> list[Color]:
         if color != Color.NOT_STARTED:
             node[goal_name] = {weight_field: special_goal_fields[weight_field], color_field: color}
         else:
-            del node[goal_name]
+            goals_to_drop.add(goal_name)
+            continue
         colors.append(color)
+    for goal_name in goals_to_drop:
+        del node[goal_name]
+    if len(goals_to_drop):
+        normalize_dictionary(node, 1.0)
     return colors
 
 
