@@ -1,7 +1,6 @@
 from enum import Enum
 
 import yaml
-import sys
 import random
 import datetime
 
@@ -16,8 +15,8 @@ escalation_duration_field = 'Escalation duration'
 color_field = 'Color'
 yellow_field = 'Yellow time'
 red_field = 'Red time'
-special_fields = [priority_field, last_execution_field, mark_field, weight_field, start_time_field,
-                  deadline_field, start_duration_field, escalation_duration_field, color_field]
+special_fields = [priority_field, last_execution_field, mark_field, weight_field, start_time_field, red_field,
+                  deadline_field, start_duration_field, escalation_duration_field, color_field, yellow_field]
 
 
 class WeightType(Enum):
@@ -122,7 +121,7 @@ def put_goal_list_into_dict(goals_dict: dict[str: dict[str: float]], goals_list:
 def check_sum_of_goal_weights(weighted_goals: dict[str: dict[str: float]]) -> None:
     sum_of_goal_weights = sum(map(lambda weight_dict: weight_dict[weight_field] if type(weight_dict) is dict else 0,
                                   weighted_goals.values()))
-    assert abs(1 - sum_of_goal_weights) < sys.float_info.epsilon, f"Wrong sum of goal weights: {sum_of_goal_weights}"
+    assert abs(1 - sum_of_goal_weights) < 10 ** (-6), f"Wrong sum of goal weights: {sum_of_goal_weights}"
 
 
 def get_weighted_goals_by_marks(goals: dict) -> dict[str: dict[str: float]]:

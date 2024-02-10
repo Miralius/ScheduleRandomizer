@@ -63,7 +63,7 @@ Development:
         Priority: 1
         First sub-sub-goal:
           Priority: 1
-          First sub-sub-goal:
+          First sub-sub-sub-goal:
             Priority: 1
             Start time: 2023-11-08T13:00:00
             Yellow time: 2023-11-30T00:00:00

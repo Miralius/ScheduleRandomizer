@@ -27,6 +27,7 @@ Thus,
 
 ## Timed goals
 You can use deadline for one-time goals or durations for repeated goals.
+> :warning: Only goals without sub goals (that is, the 'childest' goals) may have timed fields
 ### Colors
 Times are also calculated exponentially. Each goal has a color:
 - :white_small_square: Color.NOT_STARTED - not-started goal (will be dropped)
@@ -85,3 +86,107 @@ and `Next color duration` = `Escalation duration` if there's `Escalation duratio
 - `Yellow time`: ISO datetime
 - `Red time`: ISO datetime
 - Other fields are `str`
+
+# How it works (example)
+Let [goals.yaml](goals.yaml) has such structure:
+```
+---
+Development:
+  Priority: 1
+  First sphere:
+    Mark: 3
+    First goal:
+      Priority: 2
+      First sub-goal:
+        Priority: 3
+      Second sub-goal:
+        Priority: 2
+      Third sub-goal:
+        Priority: 1
+      Fourth sub-goal:
+        Priority: 1
+        High important sub-sub-goal:
+          Priority: 0
+        The second sub-sub-goal:
+          Priority: 1
+      Fifth sub-goal:
+        Priority: 4
+    Second goal:
+      Priority: 1
+      First highly important goal:
+        Priority: 0
+      Second goal:
+        Priority: 1
+        First sub-goal:
+          Priority: 1
+        Second sub-goal:
+          Priority: 2
+        Third sub-goal:
+          Priority: 3
+          First sub-sub-goal:
+            Priority: 1
+          Second sub-sub-goal:
+            Priority: 2
+          Third sub-sub-goal:
+            Priority: 3
+          Fourth sub-sub-goal:
+            Priority: 4
+      Third goal:
+        Priority: 2
+        First sub-goal:
+          Priority: 1
+        Second sub-goal:
+          Priority: 2
+        Third sub-goal:
+          Priority: 3
+          First sub-sub-goal:
+            Priority: 1
+          Second sub-sub-goal:
+            Priority: 2
+          Third sub-sub-goal:
+            Priority: 3
+          Fourth sub-sub-goal:
+            Priority: 4
+  Second sphere:
+    Mark: 0
+    First goal:
+      Priority: 1
+      First sub-goal:
+        Priority: 1
+        First sub-sub-goal:
+          Priority: 1
+          First sub-sub-sub-goal:
+            Priority: 1
+            Start time: 2023-11-08T13:00:00
+            Yellow time: 2023-11-30T00:00:00
+            Red time: 2023-12-01T23:59:59
+            Deadline: 2023-12-08T23:59:59
+Routine:
+  Priority: 1
+  First sphere:
+    Mark: 0
+    First goal:
+      Priority: 1
+      First sub-goal:
+        Priority: 1
+        Last execution: 2023-11-08T13:00:00
+        Start duration: 30
+        Escalation duration: 1
+```
+Then it turns into such dictionary:
+```python
+{
+  'Development — First sphere — First goal — First sub-goal': {'Color': Color.WHITE, 'Weight': 0.00138889},
+  'Development — First sphere — First goal — Second sub-goal': {'Color': Color.WHITE, 'Weight': 0.00277778},
+  'Development — First sphere — First goal — Third sub-goal': {'Color': Color.WHITE, 'Weight': 0.00277778},
+  'Development — First sphere — First goal — Fourth sub-goal — High important sub-sub-goal': {'Color': Color.WHITE, 'Weight': 0.00277778},
+  'Development — First sphere — First goal — Fifth sub-goal': {'Color': Color.WHITE, 'Weight': 0.000694444},
+  'Development — First sphere — Second goal — First highly important goal': {'Color': Color.WHITE, 'Weight': 0.0208333},
+  'Development — Second sphere — First goal — Fifth sub-goal — First sub-sub goal — First sub-sub-sub-goal': {'Color': Color.BLACK, 'Weight': 0.46875},
+  'Routine — First sphere — First goal — Fifth sub-goal': {'Color': Color.BLACK, 'Weight': 0.5}
+}
+```
+And program generates random number &#8712; [0, 1), for example, `random_point` = 0.617469.
+Then the program finds the first goal which has an accumulated weight not less than `random_point`.
+In this case it will be `'Routine — First sphere — First goal — Fifth sub-goal'`
+because its accumulated weight = 1.0 &#8814; `random_point = 0.617469`.
