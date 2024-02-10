@@ -130,6 +130,7 @@ def get_weighted_goals_by_marks(goals: dict) -> dict[str: dict[str: float]]:
     marks_with_goals = get_priorities_or_marks_with_goals(goals, WeightType.MARK)
     sum_priority_marks = sum(map(lambda mark_goal: 11 - mark_goal, marks_with_goals))
     for mark, goal_list in marks_with_goals.items():
+        assert 0 <= mark <= 10, f"Mark {mark} is out of range [0, 10]"
         priority_weight = (11 - mark) / sum_priority_marks
         put_goal_list_into_dict(weighted_goals, put_special_fields_into_goal_list(goal_list, priority_weight))
     check_sum_of_goal_weights(weighted_goals)
@@ -141,6 +142,7 @@ def get_weighted_goals_by_priorities(goals: dict) -> dict[str: dict[str: float]]
     priorities_with_goals = get_priorities_or_marks_with_goals(goals, WeightType.PRIORITY)
     min_priority = max(priorities_with_goals)
     for priority, goal_list in priorities_with_goals.items():
+        assert priority >= 0, f"Priority {priority} is negative"
         priority_weight = float(2 ** (min_priority - priority)) / (2 ** min_priority - 1)
         put_goal_list_into_dict(weighted_goals, put_special_fields_into_goal_list(goal_list, priority_weight))
     check_sum_of_goal_weights(weighted_goals)
@@ -179,6 +181,7 @@ def calculate_goal_times(node: dict[str: dict[str: any]], colors: list[Color]) -
 
 
 def get_color_by_time(begin_time: datetime, yellow_time: datetime, red_time: datetime, end_time: datetime) -> Color:
+    assert begin_time < yellow_time < red_time < end_time, "Wrong begin/yellow/red/end times"
     if end_time <= datetime.datetime.now():
         return Color.BLACK
     elif red_time <= datetime.datetime.now() < end_time:
@@ -191,10 +194,16 @@ def get_color_by_time(begin_time: datetime, yellow_time: datetime, red_time: dat
         return Color.NOT_STARTED
 
 
-def calculate_escalation_duration_goals(special_goal_fields: dict[str: any]) -> Color:
-    begin_time = (special_goal_fields[last_execution_field] +
-                  datetime.timedelta(days=special_goal_fields[start_duration_field]))
-    next_color_duration = datetime.timedelta(days=special_goal_fields[escalation_duration_field])
+def calculate_repeated_goals(special_goal_fields: dict[str: any]) -> Color:
+    assert start_duration_field in special_goal_fields or escalation_duration_field in special_goal_fields, \
+        "Goal must have start and/or escalation duration fields"
+    start_duration = datetime.timedelta(
+        days=special_goal_fields[start_duration_field] if start_duration_field in special_goal_fields else
+        special_goal_fields[escalation_duration_field])
+    begin_time = (special_goal_fields[last_execution_field] + start_duration)
+    next_color_duration = datetime.timedelta(
+        days=special_goal_fields[escalation_duration_field] if escalation_duration_field in special_goal_fields else
+        special_goal_fields[start_duration_field])
     end_time = begin_time + 3 * next_color_duration
     red_time = begin_time + 2 * next_color_duration
     yellow_time = begin_time + next_color_duration
@@ -202,6 +211,7 @@ def calculate_escalation_duration_goals(special_goal_fields: dict[str: any]) -> 
 
 
 def calculate_deadlined_goals(special_goal_fields: dict[str: any]) -> Color:
+    assert start_time_field in special_goal_fields, "No start time for deadlined goal"
     begin_time = special_goal_fields[start_time_field]
     end_time = special_goal_fields[deadline_field]
     yellow_time = special_goal_fields[yellow_field] if yellow_field in special_goal_fields \
@@ -219,8 +229,8 @@ def set_and_get_goal_colors(node: dict[str: dict[str: any]]) -> list[Color]:
         color = Color.WHITE
         if deadline_field in special_goal_fields:
             color = calculate_deadlined_goals(special_goal_fields)
-        elif escalation_duration_field in special_goal_fields:
-            color = calculate_escalation_duration_goals(special_goal_fields)
+        elif last_execution_field in special_goal_fields:
+            color = calculate_repeated_goals(special_goal_fields)
         if color != Color.NOT_STARTED:
             node[goal_name] = {weight_field: special_goal_fields[weight_field], color_field: color}
         else:

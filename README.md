@@ -49,3 +49,31 @@ Times are also calculated exponentially. Each goal has a color:
   - :yellow_circle: weight = 75%
 
 ### Deadlined goals
+If goal has `Deadline` field for the goal will be calculated deadline and according color.
+The goal also must have `Start time`. `Yellow time` and `Red time` are optional. How does program calculate colors?  
+Let `Goal duration` = `End time` - `Start time`, then:
+- :white_small_square: Color.NOT_STARTED - `datetime.datetime.now()` < `Start time`
+- :white_circle: Color.WHITE - `Start time` <= `datetime.datetime.now()` < 
+`Yellow time` or `Start time` + 50%`Goal duration`
+- :yellow_circle: Color.YELLOW - `Yellow time` or `Start time` + 50%`Goal duration` <=
+`datetime.datetime.now()` < `Red time` or `Start time` + 75%`Goal duration`
+- :red_circle: Color.RED - `Red time` or `Start time` + 75%`Goal duration` <=
+`datetime.datetime.now()` < `End time`
+- :black_circle: Color.BLACK - `End time` <= `datetime.datetime.now()`
+> :warning: `Start time` < `Yellow time` < `Red time` < `End time`
+### Repeated goals
+If goal has `Last execution` field for the goal will be calculated durations and according color.
+The goal also must have `Start duration` and/or `Escalation duration`. How does program calculate colors?  
+Let `Start time` = `Last execution` + `Start duration` (or `Escalation duration` if there isn't `Start duration`),
+and `Next color duration` = `Escalation duration` if there's `Escalation duration` else `Start duration`. Then:
+- :white_small_square: Color.NOT_STARTED - `datetime.datetime.now()` < `Start time`
+- :white_circle: Color.WHITE - `Start time` <= `datetime.datetime.now()` < `Start time` + `Next color duration`
+- :yellow_circle: Color.YELLOW - `Start time` + `Next color duration` <= `datetime.datetime.now()` < 
+`Start time` + 2 × `Next color duration`
+- :red_circle: Color.RED - `Start time` + 2 × `Next color duration` <= `datetime.datetime.now()` < 
+`Start time` + 3 × `Next color duration`
+- :black_circle: Color.BLACK - `Start time` + 3 × `Next color duration` <= `datetime.datetime.now()`  
+
+## Format
+- `Priority`: int &#8712; [0, 2**63 - 1)
+- `Mark`: int &#8712; [0, 10]
