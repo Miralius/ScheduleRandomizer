@@ -75,5 +75,13 @@ and `Next color duration` = `Escalation duration` if there's `Escalation duratio
 - :black_circle: Color.BLACK - `Start time` + 3 × `Next color duration` <= `datetime.datetime.now()`  
 
 ## Format
-- `Priority`: int &#8712; [0, 2**63 - 1)
+- `Priority`: non-negative int
 - `Mark`: int &#8712; [0, 10]
+- `Start time`: ISO datetime
+- `Deadline time`: ISO datetime
+- `Last execution`: ISO datetime
+- `Start duration`: non-negative int
+- `Escalation duration`: positive int
+- `Yellow time`: ISO datetime
+- `Red time`: ISO datetime
+- Other fields are `str`

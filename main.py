@@ -200,10 +200,12 @@ def calculate_repeated_goals(special_goal_fields: dict[str: any]) -> Color:
     start_duration = datetime.timedelta(
         days=special_goal_fields[start_duration_field] if start_duration_field in special_goal_fields else
         special_goal_fields[escalation_duration_field])
+    assert start_duration.days >= 0, "Start duration is negative"
     begin_time = (special_goal_fields[last_execution_field] + start_duration)
     next_color_duration = datetime.timedelta(
         days=special_goal_fields[escalation_duration_field] if escalation_duration_field in special_goal_fields else
         special_goal_fields[start_duration_field])
+    assert next_color_duration.days > 0, "Start duration isn't positive"
     end_time = begin_time + 3 * next_color_duration
     red_time = begin_time + 2 * next_color_duration
     yellow_time = begin_time + next_color_duration
