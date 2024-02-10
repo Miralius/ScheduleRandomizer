@@ -3,9 +3,9 @@ See example [goals.yaml](goals.yaml)
 
 ## Priorities
 Priorities are calculated exponentially, for example:  
-- Weight of priority 1 = $2^{1 - 1}/{(2^3 - 1)}$ = $1/7$
-- Weight of priority 2 = 2 ** (2 - 1) / (2 ** 3 - 1) = 2/7
-- Weight of priority 3 = 2 ** (3 - 1) / (2 ** 3 - 1) = 4/7
+- Weight of priority 1 = $2^{1 - 1}/{(2^3 - 1)} = 1/7$
+- Weight of priority 2 = $2^{2 - 1} / {(2^3 - 1)} = 2/7$
+- Weight of priority 3 = $2^{3 - 1} / {(2^3 - 1)} = 4/7$
 - ...  
 
 If priority == 0, then script takes only this goal and drops other goals.  
@@ -54,13 +54,13 @@ If goal has `Deadline` field for the goal will be calculated deadline and accord
 The goal also must have `Start time`. `Yellow time` and `Red time` are optional. How does program calculate colors?  
 Let `Goal duration` = `End time` - `Start time`, then:
 - :white_small_square: Color.NOT_STARTED - `datetime.datetime.now()` < `Start time`
-- :white_circle: Color.WHITE - `Start time` <= `datetime.datetime.now()` < 
+- :white_circle: Color.WHITE - `Start time` &#8804; `datetime.datetime.now()` < 
 `Yellow time` or `Start time` + 50%`Goal duration`
-- :yellow_circle: Color.YELLOW - `Yellow time` or `Start time` + 50%`Goal duration` <=
+- :yellow_circle: Color.YELLOW - `Yellow time` or `Start time` + 50%`Goal duration` &#8804;
 `datetime.datetime.now()` < `Red time` or `Start time` + 75%`Goal duration`
-- :red_circle: Color.RED - `Red time` or `Start time` + 75%`Goal duration` <=
+- :red_circle: Color.RED - `Red time` or `Start time` + 75%`Goal duration` &#8804;
 `datetime.datetime.now()` < `End time`
-- :black_circle: Color.BLACK - `End time` <= `datetime.datetime.now()`
+- :black_circle: Color.BLACK - `End time` &#8804; `datetime.datetime.now()`
 > :warning: `Start time` < `Yellow time` < `Red time` < `End time`
 ### Repeated goals
 If goal has `Last execution` field for the goal will be calculated durations and according color.
@@ -68,12 +68,12 @@ The goal also must have `Start duration` and/or `Escalation duration`. How does 
 Let `Start time` = `Last execution` + `Start duration` (or `Escalation duration` if there isn't `Start duration`),
 and `Next color duration` = `Escalation duration` if there's `Escalation duration` else `Start duration`. Then:
 - :white_small_square: Color.NOT_STARTED - `datetime.datetime.now()` < `Start time`
-- :white_circle: Color.WHITE - `Start time` <= `datetime.datetime.now()` < `Start time` + `Next color duration`
-- :yellow_circle: Color.YELLOW - `Start time` + `Next color duration` <= `datetime.datetime.now()` < 
+- :white_circle: Color.WHITE - `Start time` &#8804; `datetime.datetime.now()` < `Start time` + `Next color duration`
+- :yellow_circle: Color.YELLOW - `Start time` + `Next color duration` &#8804; `datetime.datetime.now()` < 
 `Start time` + 2 × `Next color duration`
-- :red_circle: Color.RED - `Start time` + 2 × `Next color duration` <= `datetime.datetime.now()` < 
+- :red_circle: Color.RED - `Start time` + 2 × `Next color duration` &#8804; `datetime.datetime.now()` < 
 `Start time` + 3 × `Next color duration`
-- :black_circle: Color.BLACK - `Start time` + 3 × `Next color duration` <= `datetime.datetime.now()`  
+- :black_circle: Color.BLACK - `Start time` + 3 × `Next color duration` &#8804; `datetime.datetime.now()`  
 
 ## Format
 - `Priority`: non-negative int
@@ -190,3 +190,6 @@ And program generates random number &#8712; [0, 1), for example, `random_point` 
 Then the program finds the first goal which has an accumulated weight not less than `random_point`.
 In this case it will be `'Routine — First sphere — First goal — Fifth sub-goal'`
 because its accumulated weight = 1.0 &#8814; `random_point = 0.617469`.
+
+### P.S.:
+`Development` and `Routine` has the same weight (=50%) because they both have `Priority` = 1 :)
