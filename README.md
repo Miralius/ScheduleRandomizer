@@ -3,7 +3,7 @@ See example [goals.yaml](goals.yaml)
 
 ## Priorities
 Priorities are calculated exponentially, for example:  
-- Weight of priority 1 = $2^{1 - 1}/{2^3 - 1)}$ = $1/7$
+- Weight of priority 1 = $2^{1 - 1}/{2^3 - 1}$ = $1/7$
 - Weight of priority 2 = 2 ** (2 - 1) / (2 ** 3 - 1) = 2/7
 - Weight of priority 3 = 2 ** (3 - 1) / (2 ** 3 - 1) = 4/7
 - ...  
