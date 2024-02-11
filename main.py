@@ -63,7 +63,10 @@ def get_priorities_or_marks_with_goals(goals: dict, weightType: WeightType) -> d
     for name, goal in goals.items():
         if name not in special_fields:
             if weight_type_field == priority_field and goal[priority_field] == 0:
-                return {1: [name]}
+                return {1: [name]} if type(goal) is not dict else {1: [{name: {special_field: special_value for
+                                                                               special_field, special_value in
+                                                                               goal.items() if
+                                                                               special_field != weight_type_field}}]}
             if goal[weight_type_field] not in priorities_with_goals:
                 priorities_with_goals[goal[weight_type_field]] = []
             if are_fields_special(goal):
