@@ -272,7 +272,7 @@ def get_weighted_goals(goals: dict) -> dict[str: dict[str, any]]:
     elif any(are_child_goals_have_marks(child_goals) for child_goals in goals.values()):
         return get_weighted_goals_by_marks(goals)
     else:
-        raise ValueError("Wrong goals file structure")
+        raise ValueError("Wrong goals file structure or special field name")
 
 
 def is_it_root_node(node: dict) -> bool:
