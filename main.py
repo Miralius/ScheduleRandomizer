@@ -320,5 +320,5 @@ def select_random_goal(rest: bool) -> str:
 
 
 if __name__ == '__main__':
-    are_rest_goals = sys.argv[1] == '-rest' if len(sys.argv) else False
+    are_rest_goals = sys.argv[1] == '-rest'
     print(select_random_goal(are_rest_goals))
