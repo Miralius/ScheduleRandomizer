@@ -3,6 +3,7 @@ from enum import Enum
 import yaml
 import random
 import datetime
+import sys
 
 priority_field = 'Priority'
 mark_field = 'Mark'
@@ -32,8 +33,8 @@ class Color(Enum):
     BLACK = 4
 
 
-def load_goals() -> dict:
-    with open('goals.yaml', 'r', encoding='utf-8') as f:
+def load_goals(rest: bool) -> dict:
+    with open('rest_goals.yaml' if rest else 'goals.yaml', 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
 
@@ -311,12 +312,13 @@ def get_lower_goal(goals: dict[str: dict[str: float]], random_point: float) -> s
     raise ValueError("Wrong sum of goal weights or wrong random point (must be <=1)")
 
 
-def select_random_goal() -> str:
-    goals = load_goals()
+def select_random_goal(rest: bool) -> str:
+    goals = load_goals(rest)
     goals_dict = process_goals(goals)
     random_point = random.random()
     return get_lower_goal(goals_dict, random_point)
 
 
 if __name__ == '__main__':
-    print(select_random_goal())
+    are_rest_goals = sys.argv[1] == '-rest' if len(sys.argv) else False
+    print(select_random_goal(are_rest_goals))
