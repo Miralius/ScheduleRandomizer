@@ -277,7 +277,7 @@ def get_weighted_goals(goals: dict) -> dict[str: dict[str, any]]:
 
 
 def is_it_root_node(node: dict) -> bool:
-    return 'Development' in node and 'Routine' in node
+    return 'Development' in node or 'Routine' in node
 
 
 def create_processed_goal_node(goals: dict, processed_goals: dict) -> dict[str: any]:
@@ -320,5 +320,5 @@ def select_random_goal(rest: bool) -> str:
 
 
 if __name__ == '__main__':
-    are_rest_goals = sys.argv[1] == '-rest'
+    are_rest_goals = sys.argv[1] == '-rest' if len(sys.argv) > 1 else False
     print(select_random_goal(are_rest_goals))
