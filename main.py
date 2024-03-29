@@ -194,7 +194,7 @@ def calculate_goal_times(node: dict[str: dict[str: any]], colors: list[Color]) -
 
 
 def get_color_by_time(begin_time: datetime, yellow_time: datetime, red_time: datetime, end_time: datetime) -> Color:
-    assert begin_time < yellow_time < red_time < end_time, "Wrong begin/yellow/red/end times"
+    assert begin_time <= yellow_time <= red_time <= end_time, "Wrong begin/yellow/red/end times"
     if end_time <= datetime.datetime.now():
         return Color.BLACK
     elif red_time <= datetime.datetime.now() < end_time:
@@ -218,7 +218,7 @@ def calculate_repeated_goals(special_goal_fields: dict[str: any]) -> Color:
     next_color_duration = datetime.timedelta(
         days=special_goal_fields[escalation_duration_field] if escalation_duration_field in special_goal_fields else
         special_goal_fields[start_duration_field])
-    assert next_color_duration.days > 0, "Start duration isn't positive"
+    assert next_color_duration.days >= 0, "Next color duration is negative"
     end_time = begin_time + 3 * next_color_duration
     red_time = begin_time + 2 * next_color_duration
     yellow_time = begin_time + next_color_duration
