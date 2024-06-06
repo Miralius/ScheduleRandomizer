@@ -5,6 +5,8 @@ import random
 import datetime
 import sys
 
+from yaml import nodes
+
 priority_field = 'Priority'
 mark_field = 'Mark'
 weight_field = 'Weight'
@@ -33,8 +35,8 @@ class Color(Enum):
     BLACK = 4
 
 
-def load_goals(rest: bool) -> dict:
-    with open('rest_goals.yaml' if rest else 'goals.yaml', 'r', encoding='utf-8') as f:
+def load_goals(goal_filename: str) -> dict:
+    with open(goal_filename, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
 
@@ -261,8 +263,15 @@ def set_and_get_goal_colors(node: dict[str: dict[str: any]]) -> list[Color]:
 
 
 def calculate_weighted_goals_by_times(goals: dict[str: dict[str: dict[str: any]]]) -> None:
-    for node in goals.values():
-        calculate_goal_times(node, set_and_get_goal_colors(node))
+    goals_to_drop = set()
+    for name, node in goals.items():
+        colors = set_and_get_goal_colors(node)
+        if len(colors):
+            calculate_goal_times(node, colors)
+        else:
+            goals_to_drop.add(name)
+    for goal_name in goals_to_drop:
+        del goals[goal_name]
 
 
 def get_weighted_goals(goals: dict) -> dict[str: dict[str, any]]:
@@ -312,13 +321,13 @@ def get_lower_goal(goals: dict[str: dict[str: float]], random_point: float) -> s
     raise ValueError("Wrong sum of goal weights or wrong random point (must be <=1)")
 
 
-def select_random_goal(rest: bool) -> str:
-    goals = load_goals(rest)
+def select_random_goal(goal_filename: str) -> str:
+    goals = load_goals(goal_filename)
     goals_dict = process_goals(goals)
     random_point = random.random()
     return get_lower_goal(goals_dict, random_point)
 
 
 if __name__ == '__main__':
-    are_rest_goals = sys.argv[1] == '-rest' if len(sys.argv) > 1 else False
-    print(select_random_goal(are_rest_goals))
+    filename = sys.argv[1] + '_goals.yaml' if len(sys.argv) > 1 else 'goals.yaml'
+    print(select_random_goal(filename))
